@@ -1,38 +1,13 @@
+from basic.models import *
 from bs4 import BeautifulSoup
 from zipfile import ZipFile
 from tqdm.auto import tqdm
-import re, requests, os, sys, shutil
-
-# VOs
-
-class Modulo:
-    def __init__(self):
-        self.nome: str  = ''
-        self.url: str = ''
-        self.arquivo: str = ''
-        self.diretorio: str = ''
-
-class Trilha:
-    def __init__(self):
-        self.nome: str = ''
-        self.modulos: list[Modulo] = []
-
-class Disciplina:
-    def __init__(self):
-        self.nome: str = ''
-        self.trilhas: list[Trilha] = []
-
-    def __eq__(self, other: object) -> bool:
-        return self.nome == other.nome
-
-# Facades
+import re, requests, os, shutil
 
 class Downloader:
     
-    def __init__(self, html_file: str):
-        self.html_file = html_file
+    def __init__(self):        
         self.__disciplinas: list[Disciplina] = []
-
         
     def __extrair(self):
         """
@@ -40,7 +15,6 @@ class Downloader:
         """
     
         base_url = 'https://www.provasdeti.com.br'
-        base_dir = 'downloads'
 
         with open(self.html_file, 'r') as f:
             bs = BeautifulSoup(f, 'html.parser')
@@ -74,7 +48,7 @@ class Downloader:
                         modulo.nome = f'{ind_modulo:02d} - {div_info[1].string}'.replace(':', ' -').strip()
                         modulo.url = f"{base_url}{a_slide[0]['href']}"
                         modulo.arquivo = modulo.url.split('/')[-1]
-                        modulo.diretorio = f'{base_dir}/{disciplina.nome}/{trilha.nome}/{modulo.nome}'
+                        modulo.diretorio = f'{self.download_dir}/{disciplina.nome}/{trilha.nome}/{modulo.nome}'
 
                         trilha.modulos.append(modulo)
 
@@ -149,18 +123,13 @@ class Downloader:
                     print(f'\t\t')
 
 
-    def baixar(self, debug_est: bool = False):
+    def baixar(self, html_file: str, download_dir: str, debug_est: bool = False):
+        self.html_file = html_file
+        self.download_dir = download_dir
         self.__extrair()
         if (debug_est):
             self.__print_disciplinas()
         else:
             self.__download()
 
-if (__name__ == '__main__'):   
-    debug_est = False
-    downloader = Downloader('input.html')    
-    
-    if ('-d' in sys.argv):
-        debug_est = True        
-    
-    downloader.baixar(debug_est)
+
